@@ -62,18 +62,21 @@ resource "aws_iam_policy" "EcrAccessPolicy" {
       {
         Effect   = "Allow"
         Action   = [
-          "ecr:CreateRepository",       
-          "ecr:DescribeRepositories",    
-          "ecr:DeleteRepository",
-          "ecr:TagResource",
-          "ecr:List*",
-          "ecr:ListTagsForResource",
-          "ecr:GetAuthorizationToken",
-          "ecr:InitiateLayerUpload",
-          "ecr:UploadLayerPart",
-          "ecr:CompleteLayerUpload",
-          "ecr:SetRepositoryPolicy",
-          "ecr:PutImage"
+        "ecr:GetAuthorizationToken",
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:CreateRepository",
+        "ecr:DeleteRepository",
+        "ecr:DescribeRepositories",
+        "ecr:DescribeImages",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:ListTagsForResource",
+        "ecr:TagResource",
+        "ecr:PutImage",
+        "ecr:SetRepositoryPolicy",
+        "ecr:InitiateLayerUpload",
+        "ecr:UploadLayerPart",
+        "ecr:CompleteLayerUpload",
+        "ecr:GetRepositoryPolicy"
         ]
         Resource = "*"
       }
@@ -262,31 +265,30 @@ resource "aws_iam_policy" "UserCodeBuildCodePipelineS3Access" {
         {
       Sid = "S3MinimalAccess"
       Effect = "Allow",
-      Action = ["S3:Put*",
-                "S3:Create*",
-                "S3:Update*",
-                "S3:Delete*",
-                "S3:AbortMultipartUpload",
-                "S3:AssociateAccessGrantsIdentityCenter",
-                "S3:InitiateReplication",
-                "S3:PauseReplication",
-                "S3:SubmitMultiRegionAccessPointRoutes",
-                "S3:ReplicateTags",
-                "S3:TagResource",
-                "S3:UntagResource",
-                "S3:BypassGovernanceRetention",
-                "S3:ObjectOwnerOverrideToBucketOwner",
-                "S3:DissociateAccessGrantsIdentityCenter",
-                "S3:ReplicateDelete",
-                "S3:ReplicateObject",
-                "S3:RestoreObject"
+      Action = ["s3:PutObject",
+        "s3:GetObject",
+        "s3:DeleteObject",
+        "s3:AbortMultipartUpload",
+        "s3:ListBucket",
+        "s3:GetBucketLocation",
+        "s3:GetObjectTagging",
+        "s3:PutObjectTagging",
+        "s3:DeleteObjectTagging",
+        "s3:RestoreObject",
+        "s3:DeleteBucket",
+        "s3:DeleteBucketPolicy",
+        "s3:PutBucketWebsite",
+        "s3:PutBucketVersioning",
+        "s3:PutBucketPublicAccessBlock",
+        "s3:PutBucketPolicy"
                 ],
-      Resource = "*",
-      Condition = {
-          "StringEquals": {
-            "aws:ResourceTag/OwnerGroup": "FactoryOulet-Frontend"
-          }
-      }
+      Resource = "arn:aws:s3:::factoryoulet-front-end-host",
+    },
+    {
+      Sid = "IAMPASS"
+      Effect = "Allow"
+      Action = "Iam:PassRole"
+      Resource = "*"
     }
   ]
 })
