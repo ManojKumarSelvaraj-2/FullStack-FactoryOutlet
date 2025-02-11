@@ -49,7 +49,41 @@ AWS will not send any login credentials by default.
 https://<account-id>.signin.aws.amazon.com/console.
 
 */
-
+resource "aws_iam_policy" "Common_Policies" {
+  name = "Common_Policies"
+  description = "SNS,"
+  policy = jsonencode({
+      Version = "2012-10-17"
+      Statement = [
+        {
+        Sid = "SNSPolicy"
+        Effect = "Allow"
+        Action = [
+          "sns:Subscribe",
+          "sns:Receive",
+          "sns:Public",
+          "sns:ListSubscriptionByTopic",
+          "sns:CreateTopic",
+          "sns:GetTopicAttributes",
+          "sns:ListTagsForResource",
+          "sns:Get*"
+        ]
+        Resource = "arn:aws:sns:us-east-1:039612868338:factory-outlet-frontend-*"
+        },
+        {
+          Sid = "ACMAccessPolicy"
+          Effect = "Allow"
+          Action = ["acm:DescribeCertificate",
+                    "acm:RequestCertificate",
+                    "acm:ListCertificates",
+                    "acm:deleteCertificate",
+                    "acm:ListTagsForCertificate"
+                    ]
+          Resource = "*"
+        }
+      ]
+  })
+}
 resource "aws_iam_policy" "EcrAccessPolicy" {
   name = "ECRPolicy"
   description = "Policy to allow creating ECR, CodeBuild, and EC2 resources with least privilege"
@@ -715,6 +749,22 @@ resource "aws_iam_role" "code_pipeline_role" {
   })
 }
 
+resource "aws_iam_policy" "codepipeline_sns_policy" {
+  name        = "CodePipelineSNSPublishPolicy"
+  description = "Allows CodePipeline to publish to SNS for manual approvals"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = "sns:Publish"
+        Resource = "aws:aws:sns:us-east-1:039612868338:factory-outlet-frontend-*"
+      }
+    ]
+  })
+}
+
 # IAM Policy Attachment for CodePipeline Role (S3 Policy)
 resource "aws_iam_policy_attachment" "code_pipeline_s3_policy_attachment" {
   name       = "codepipeline-s3-policy-attachment"
@@ -741,6 +791,16 @@ resource "aws_iam_policy_attachment" "code_pipeline_iam_pass_role_policy_attachm
 
   depends_on = [aws_iam_policy.iam_pass_role_policy, aws_iam_role.code_pipeline_role]
 }
+
+# IAM Policy Attachment for CodePipeline Role (codepipeline_sns_policy)
+resource "aws_iam_policy_attachment" "codepipeline_sns_policy_attachment" {
+  name       = "codepipeline-iam-pass-role-policy-attachment"
+  policy_arn = aws_iam_policy.codepipeline_sns_policy.arn
+  roles      = [aws_iam_role.code_pipeline_role.id]
+
+  depends_on = [aws_iam_policy.codepipeline_sns_policy, aws_iam_role.code_pipeline_role]
+}
+
 
 # IAM Policy Attachment for CodePipeline Role (CloudWatch Policy)
 resource "aws_iam_policy_attachment" "code_pipeline_cloudwatch_policy_attachment" {
@@ -959,3 +1019,11 @@ resource "aws_iam_group_policy_attachment" "EcrAccessPolicy_Attachment" {
   group      = aws_iam_group.factory_outlet_frontend_developer_group.name
   depends_on = [aws_iam_policy.EcrAccessPolicy]
 }
+
+# IAM Group Policy Attachment for Common_Policies
+resource "aws_iam_group_policy_attachment" "Common_Policies_Attachment" {
+  policy_arn = aws_iam_policy.Common_Policies.arn
+  group      = aws_iam_group.factory_outlet_frontend_developer_group.name
+  depends_on = [aws_iam_policy.Common_Policies]
+}
+
